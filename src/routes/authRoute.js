@@ -10,6 +10,7 @@ const {
 const { logoutController } = require("../controllers/logoutController");
 const { logoutAllController } = require("../controllers/logoutAllController");
 const { loginController } = require("../controllers/loginController");
+const { verifyOtpController } = require("../controllers/otpVerifyController");
 
 router.post("/register", registerController);
 
@@ -22,5 +23,7 @@ router.get("/refresh-token", refreshTokenController);
 router.get("/logout", logoutController);
 
 router.get("/logout-all", logoutAllController);
+
+router.post("/verify-otp", otpVerifyController);
 
 module.exports = router;

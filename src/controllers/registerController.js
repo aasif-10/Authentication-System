@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const userModel = require("../models/user-model");
 const config = require("../config/config");
 const sessionModel = require("../models/session-model");
+const { generateOtp, getOtpHtml } = require("../utils/utils");
+const { sendEmail } = require("../services/email-service");
+const { otpModel } = require("../models/otp-model");
 
 module.exports.registerController = async (req, res) => {
   const { username, email, password } = req.body;
@@ -34,28 +37,16 @@ module.exports.registerController = async (req, res) => {
     password: hash,
   });
 
-  const accessToken = jwt.sign({ id: user._id }, config.JWT_SECRET, {
-    expiresIn: "15m",
-  });
+  const otp = generateOtp();
+  const otpHtml = getOtpHtml(otp);
 
-  const refreshToken = jwt.sign({ id: user._id }, config.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  const session = await sessionModel.create({
+  const otpEntry = await otpModel.create({
+    email: email,
     user: user._id,
-    refreshToken: refreshToken,
-    ip: req.ip,
-    userAgent: req.headers["user-agent"],
-    revoke: false,
+    otp: otp,
   });
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  await sendEmail(email, "Your OTP Code", `Your OTP code is: ${otp}`, otpHtml);
 
   res.status(201).json({
     user: {
@@ -64,6 +55,5 @@ module.exports.registerController = async (req, res) => {
     },
     message: "User registered successfully",
     status: true,
-    token: accessToken,
   });
 };

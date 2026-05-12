@@ -29,7 +29,11 @@ module.exports.loginController = async (req, res) => {
     });
   }
 
-  // Tokens and response code goes here...
+  if (!user.verified) {
+    return res.status(403).json({
+      message: "Email not verified",
+    });
+  }
 
   const accessToken = jwt.sign({ id: user._id }, config.JWT_SECRET, {
     expiresIn: "15m",
