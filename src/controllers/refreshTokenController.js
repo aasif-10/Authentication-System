@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
+const sessionModel = require("../models/session-model");
 
-module.exports.refreshTokenController = (req, res) => {
+module.exports.refreshTokenController = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   console.log(refreshToken);
 
@@ -13,6 +14,17 @@ module.exports.refreshTokenController = (req, res) => {
 
   const decoded = jwt.verify(refreshToken, config.JWT_SECRET);
 
+  const session = await sessionModel.findOne({
+    refreshToken: refreshToken,
+    revoke: false,
+  });
+
+  if (!session) {
+    return res.status(400).json({
+      message: "refresh token invalid",
+    });
+  }
+
   const accessToken = jwt.sign({ id: decoded.id }, config.JWT_SECRET, {
     expiresIn: "15m",
   });
@@ -20,6 +32,9 @@ module.exports.refreshTokenController = (req, res) => {
   const newRefreshToken = jwt.sign({ id: decoded.id }, config.JWT_SECRET, {
     expiresIn: "7d",
   });
+
+  session.refreshToken = newRefreshToken;
+  await session.save();
 
   res.cookie("refreshToken", newRefreshToken, {
     httpOnly: true,

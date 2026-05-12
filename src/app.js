@@ -16,6 +16,7 @@ const authRoute = require("./routes/authRoute");
 
 /* models */
 const userModel = require("./models/user-model");
+const sessionModel = require("./models/session-model");
 
 app.use("/", redirectRoute);
 app.use("/api/health", healthRoute);
